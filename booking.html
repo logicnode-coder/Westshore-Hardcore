@@ -81,9 +81,6 @@
         <button class="dashboard-tab active" onclick="showDashboardTab('book')">
           Book a Wash
         </button>
-        <button class="dashboard-tab" onclick="showDashboardTab('mybookings')">
-          My Bookings
-        </button>
         <button
           class="dashboard-tab hidden"
           id="adminTab"
@@ -97,7 +94,7 @@
 
       <div id="bookTab" class="tab-content active">
         <form class="booking-form" onsubmit="handleBooking(event)">
-          <h2 style="margin-bottom: 2rem; color: var(--deep-blue)">
+          <h2 style="margin-bottom: 2rem; color: var(--white)">
             Book Your Car Wash
           </h2>
 
@@ -147,15 +144,9 @@
         </form>
       </div>
 
-      <div id="myBookingsTab" class="tab-content">
-        <div id="myBookingsList" class="bookings-grid"></div>
-      </div>
-
       <div id="adminTab-content" class="tab-content">
         <div class="admin-panel">
-          <h2 style="margin-bottom: 2rem; color: var(--deep-blue)">
-            Admin Dashboard
-          </h2>
+          <h2 class="section-header">Admin Dashboard</h2>
 
           <div class="stats-grid">
             <div class="stat-card">
@@ -172,12 +163,10 @@
             </div>
           </div>
 
-          <h3 style="margin-bottom: 1rem; color: var(--deep-blue)">
-            All Bookings
-          </h3>
-          <div id="adminBookingList" class="bookings-grid"></div>
+          <h3 class="section-header">All Bookings</h3>
+          <div id="adminBookingsList" class="bookings-grid"></div>
 
-          <h3 style="margin: 2rem 0 1rem; color: var(--deep-blue)">
+          <h3 class="section-header" style="margin-top: 2rem">
             Users Management
           </h3>
           <div id="usersList" class="users-list"></div>
