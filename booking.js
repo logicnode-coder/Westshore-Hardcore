@@ -47,10 +47,13 @@ onAuthStateChanged(auth, async (user) => {
     currentUser = user;
     await loadUserData();
     showDashboard();
-    loadMyBookings();
-    if (currentUserData?.role === "admin") {
+
+    // Only show admin tab if user is actually an admin
+    if (currentUserData && currentUserData.role === "admin") {
       document.getElementById("adminTab").classList.remove("hidden");
       loadAdminData();
+    } else {
+      document.getElementById("adminTab").classList.add("hidden");
     }
   } else {
     showAuth();
@@ -140,7 +143,6 @@ window.handleBooking = async (e) => {
       userName: currentUserData.name,
       userPhone: currentUserData.phone,
       vehicleType: document.getElementById("vehicleType").value,
-      address: document.getElementById("bookingAddress").value,
       date: document.getElementById("bookingDate").value,
       time: document.getElementById("bookingTime").value,
       notes: document.getElementById("bookingNotes").value,
@@ -150,70 +152,56 @@ window.handleBooking = async (e) => {
 
     showMessage(
       "dashboardMessage",
-      "Booking submitted successfully!",
+      "Booking submitted successfully! We'll contact you soon.",
       "success"
     );
     e.target.reset();
     btn.textContent = "Submit Booking";
-    loadMyBookings();
   } catch (error) {
     showMessage("dashboardMessage", error.message, "error");
     btn.textContent = "Submit Booking";
   }
 };
 
-// Load My Bookings
-async function loadMyBookings() {
-  const bookingsRef = collection(db, "bookings");
-  const q = query(
-    bookingsRef,
-    where("userId", "==", currentUser.uid),
-    orderBy("createdAt", "desc")
-  );
-  const snapshot = await getDocs(q);
-
-  const container = document.getElementById("myBookingsList");
-
-  if (snapshot.empty) {
-    container.innerHTML =
-      '<div class="empty-state"><h3>No bookings yet</h3><p>Book your first car wash to get started!</p></div>';
-    return;
-  }
-
-  container.innerHTML = snapshot.docs
-    .map((doc) => {
-      const booking = doc.data();
-      return createBookingCard(doc.id, booking, false);
-    })
-    .join("");
-}
-
 // Load Admin Data
 async function loadAdminData() {
-  const bookingsRef = collection(db, "bookings");
-  const snapshot = await getDocs(bookingsRef);
+  try {
+    const bookingsRef = collection(db, "bookings");
+    const q = query(bookingsRef, orderBy("createdAt", "desc"));
+    const snapshot = await getDocs(q);
 
-  const bookings = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    const bookings = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
 
-  document.getElementById("totalBookings").textContent = bookings.length;
-  document.getElementById("pendingBookings").textContent = bookings.filter(
-    (b) => b.status === "pending"
-  ).length;
-  document.getElementById("completedBookings").textContent = bookings.filter(
-    (b) => b.status === "completed"
-  ).length;
+    document.getElementById("totalBookings").textContent = bookings.length;
+    document.getElementById("pendingBookings").textContent = bookings.filter(
+      (b) => b.status === "pending"
+    ).length;
+    document.getElementById("completedBookings").textContent = bookings.filter(
+      (b) => b.status === "completed"
+    ).length;
 
-  const container = document.getElementById("adminBookingsList");
-  if (bookings.length === 0) {
-    container.innerHTML =
-      '<div class="empty-state"><h3>No bookings yet</h3></div>';
-  } else {
-    container.innerHTML = bookings
-      .map((booking) => createBookingCard(booking.id, booking, true))
-      .join("");
+    const container = document.getElementById("adminBookingsList");
+    if (bookings.length === 0) {
+      container.innerHTML =
+        '<div class="empty-state"><h3>No bookings yet</h3><p>Bookings will appear here once customers start booking</p></div>';
+    } else {
+      container.innerHTML = bookings
+        .map((booking) => createBookingCard(booking.id, booking, true))
+        .join("");
+    }
+
+    await loadUsers();
+  } catch (error) {
+    console.error("Error loading admin data:", error);
+    showMessage(
+      "dashboardMessage",
+      "Error loading bookings: " + error.message,
+      "error"
+    );
   }
-
-  await loadUsers();
 }
 
 // Load Users
@@ -233,15 +221,26 @@ async function loadUsers() {
         user.name
       }</div>
                 </div>
-                ${
-                  user.role !== "admin"
-                    ? `
-                    <button class="btn btn-warning" onclick="makeAdmin('${doc.id}')">
-                        Make Admin
-                    </button>
-                `
-                    : '<span style="color: var(--success); font-weight: 600;">Admin</span>'
-                }
+                <div style="display: flex; gap: 0.5rem;">
+                    ${
+                      user.role !== "admin"
+                        ? `
+                        <button class="btn btn-warning" onclick="makeAdmin('${doc.id}')">
+                            Make Admin
+                        </button>
+                    `
+                        : '<span style="color: var(--success); font-weight: 600; margin-right: 0.5rem;">Admin</span>'
+                    }
+                    ${
+                      user.uid !== currentUser.uid
+                        ? `
+                        <button class="btn btn-danger" onclick="deleteUser('${doc.id}', '${user.uid}')">
+                            Delete User
+                        </button>
+                    `
+                        : ""
+                    }
+                </div>
             </div>
         `;
     })
@@ -257,11 +256,46 @@ window.makeAdmin = async (userId) => {
   }
 };
 
+// Delete User
+window.deleteUser = async (userId, userUid) => {
+  if (
+    confirm(
+      "Are you sure you want to delete this user? This will also delete all their bookings."
+    )
+  ) {
+    try {
+      // Delete user document from Firestore
+      await deleteDoc(doc(db, "users", userId));
+
+      // Delete all bookings for this user
+      const bookingsRef = collection(db, "bookings");
+      const q = query(bookingsRef, where("userId", "==", userUid));
+      const snapshot = await getDocs(q);
+
+      const deletePromises = snapshot.docs.map((doc) => deleteDoc(doc.ref));
+      await Promise.all(deletePromises);
+
+      showMessage(
+        "dashboardMessage",
+        "User and their bookings deleted successfully!",
+        "success"
+      );
+      loadUsers();
+      loadAdminData();
+    } catch (error) {
+      showMessage(
+        "dashboardMessage",
+        "Error deleting user: " + error.message,
+        "error"
+      );
+    }
+  }
+};
+
 // Update Booking Status
 window.updateBookingStatus = async (bookingId, status) => {
   await updateDoc(doc(db, "bookings", bookingId), { status: status });
   showMessage("dashboardMessage", `Booking ${status}!`, "success");
-  loadMyBookings();
   if (currentUserData?.role === "admin") {
     loadAdminData();
   }
@@ -272,7 +306,6 @@ window.deleteBooking = async (bookingId) => {
   if (confirm("Are you sure you want to delete this booking?")) {
     await deleteDoc(doc(db, "bookings", bookingId));
     showMessage("dashboardMessage", "Booking deleted!", "success");
-    loadMyBookings();
     if (currentUserData?.role === "admin") {
       loadAdminData();
     }
@@ -307,10 +340,16 @@ function createBookingCard(id, booking, isAdmin) {
                     <span class="detail-label">Phone</span>
                     <span class="detail-value">${booking.userPhone}</span>
                 </div>
-            </div>
-            <div class="detail-item" style="margin-top: 1rem;">
-                <span class="detail-label">Address</span>
-                <span class="detail-value">${booking.address}</span>
+                ${
+                  isAdmin
+                    ? `
+                <div class="detail-item">
+                    <span class="detail-label">Email</span>
+                    <span class="detail-value">${booking.userEmail}</span>
+                </div>
+                `
+                    : ""
+                }
             </div>
             ${
               booking.notes
@@ -350,9 +389,15 @@ function createBookingCard(id, booking, isAdmin) {
                 `
                     : ""
                 }
+                ${
+                  isAdmin
+                    ? `
                 <button class="btn btn-danger" onclick="deleteBooking('${id}')">
                     Delete
                 </button>
+                `
+                    : ""
+                }
             </div>
         </div>
     `;
@@ -399,9 +444,6 @@ window.showDashboardTab = (tab) => {
 
   if (tab === "book") {
     document.getElementById("bookTab").classList.add("active");
-  } else if (tab === "mybookings") {
-    document.getElementById("mybookingsTab").classList.add("active");
-    loadMyBookings();
   } else if (tab === "admin") {
     document.getElementById("adminTab-content").classList.add("active");
     loadAdminData();
@@ -417,7 +459,10 @@ function showMessage(containerId, message, type) {
   }, 5000);
 }
 
-// Set minimum date to today
-document.getElementById("bookingDate").min = new Date()
-  .toISOString()
-  .split("T")[0];
+// Initialize minimum date when page loads
+window.addEventListener("DOMContentLoaded", () => {
+  const dateInput = document.getElementById("bookingDate");
+  if (dateInput) {
+    dateInput.min = new Date().toISOString().split("T")[0];
+  }
+});
