@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Westshore Hardcore | Logiclean | Gallery</title>
+    <link rel="stylesheet" href="gallery.css" />
+  </head>
+  <body>
+    <nav class="navbar" id="navbar">
+      <div class="nav-container">
+        <img src="assets/logo.png" alt="Westshore Hardcore Logo" class="logo" />
+        <div class="nav-links">
+          <a href="index.html">Home</a>
+          <a href="reviews.html">Reviews</a>
+          <a href="gallery.html">Gallery</a>
+          <a href="booking.html" class="cta-btn">Book Now</a>
+        </div>
+        <button class="mobile-menu-btn">☰</button>
+      </div>
+    </nav>
+
+    <div class="container">
+      <div class="page-header">
+        <h1>Our Gallery</h1>
+        <p>Check out our work and facilities</p>
+      </div>
+
+      <div id="uploadSection" class="upload-section hidden">
+        <h2>Upload Photos</h2>
+        <form id="uploadForm" onsubmit="uploadImage(event)">
+          <div class="upload-area" id="uploadArea">
+            <input
+              type="file"
+              id="imageInput"
+              accept="image/*"
+              required
+              onchange="previewImage(event)"
+            />
+            <div class="upload-prompt">
+              <div class="upload-icon">📸</div>
+              <p>Click to select an image or drag and drop</p>
+              <p class="upload-hint">JPG, PNG, GIF up to 5MB</p>
+            </div>
+            <img id="imagePreview" class="image-preview hidden" />
+          </div>
+
+          <div class="form-group">
+            <label>Image Description (optional)</label>
+            <input
+              type="text"
+              id="imageDescription"
+              placeholder="e.g., Before and after wash"
+            />
+          </div>
+
+          <button type="submit" class="btn-primary">
+            <span id="uploadBtnText">Upload Image</span>
+          </button>
+        </form>
+      </div>
+
+      <div class="gallery-grid" id="galleryGrid">
+        <div class="loading-spinner">Loading gallery...</div>
+      </div>
+    </div>
+
+    <div id="lightbox" class="lightbox hidden" onclick="closeLightBox()">
+      <span class="close-lightbox">&times;</span>
+      <img id="lightboxImage" class="lightbox-image" />
+      <div class="lightbox-caption" id="lightboxCaption"></div>
+      <button
+        id="deleteLightboxBtn"
+        class="btn-delete-lightbox hidden"
+        onclick="deleteFromLightbox(event)"
+      >
+        Delete Image
+      </button>
+    </div>
+
+    <footer class="footer">
+      <p>&copy; 2026 Westshore Hardcore. All rights reserved.</p>
+    </footer>
+
+    <script type="module" src="gallery.js"></script>
+  </body>
+</html>

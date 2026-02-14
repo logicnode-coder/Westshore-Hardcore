@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Westshore Hardcore | Logiclean | Reviews</title>
+    <link rel="stylesheet" href="reviews.css" />
+  </head>
+  <body>
+    <nav class="navbar" id="navbar">
+      <div class="nav-container">
+        <img src="assets/logo.png" alt="Westshore Hardcore Logo" class="logo" />
+        <div class="nav-links">
+          <a href="index.html">Home</a>
+          <a href="reviews.html">Reviews</a>
+          <a href="gallery.html">Gallery</a>
+          <a href="booking.html" class="cta-btn">Book Now</a>
+        </div>
+        <button class="mobile-menu-btn">☰</button>
+      </div>
+    </nav>
+
+    <div class="container">
+      <div class="page-header">
+        <h1>Customer Reviews</h1>
+        <p>See what our customers are saying about us</p>
+      </div>
+
+      <div id="loginPrompt" class="login-prompt hidden">
+        <p>Please <a href="booking.html">Login</a> to leave a review</p>
+      </div>
+
+      <div id="reviewFormContainer" class="review-form-container hidden">
+        <h2>Leave a Review</h2>
+        <form id="reviewForm" onsubmit="submitReview(event)">
+          <div class="form-group">
+            <label>Your Rating *</label>
+            <div class="star-rating">
+              <input type="radio" name="rating" value="5" id="star5" required />
+              <label for="star5">★</label>
+              <input type="radio" name="rating" value="4" id="star4" />
+              <label for="star4">★</label>
+              <input type="radio" name="rating" value="3" id="star3" />
+              <label for="star3">★</label>
+              <input type="radio" name="rating" value="2" id="star2" />
+              <label for="star2">★</label>
+              <input type="radio" name="rating" value="1" id="star1" />
+              <label for="star1">★</label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Your Review *</label>
+            <textarea
+              id="reviewText"
+              required
+              placeholder="Tell us about your experience..."
+              rows="5"
+            ></textarea>
+          </div>
+
+          <button type="submit" class="btn-primary">
+            <span id="submitBtnText">Submit Review</span>
+          </button>
+        </form>
+      </div>
+
+      <div class="reviews-section">
+        <div class="reviews-header">
+          <h2>All Reviews</h2>
+          <div class="average-rating" id="averageRating">
+            <div class="stars"></div>
+            <span class="rating-text"></span>
+          </div>
+        </div>
+        <div id="reviewsList" class="reviews-list">
+          <div class="loading-spinner">Loading reviews...</div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <p>&copy; 2026 Westshore Hardcore. All rights reserved.</p>
+    </footer>
+
+    <script type="module" src="reviews.js"></script>
+  </body>
+</html>
