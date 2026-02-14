@@ -21,11 +21,13 @@
     </nav>
 
     <div class="container">
+      <!-- Header -->
       <div class="page-header">
         <h1>Our Gallery</h1>
         <p>Check out our work and facilities</p>
       </div>
 
+      <!-- Admin Upload Section -->
       <div id="uploadSection" class="upload-section hidden">
         <h2>Upload Photos</h2>
         <form id="uploadForm" onsubmit="uploadImage(event)">
@@ -40,7 +42,7 @@
             <div class="upload-prompt">
               <div class="upload-icon">📸</div>
               <p>Click to select an image or drag and drop</p>
-              <p class="upload-hint">JPG, PNG, GIF up to 5MB</p>
+              <p class="upload-hint">JPG, PNG, GIF up to 1MB</p>
             </div>
             <img id="imagePreview" class="image-preview hidden" />
           </div>
@@ -60,12 +62,14 @@
         </form>
       </div>
 
+      <!-- Gallery Grid -->
       <div class="gallery-grid" id="galleryGrid">
         <div class="loading-spinner">Loading gallery...</div>
       </div>
     </div>
 
-    <div id="lightbox" class="lightbox hidden" onclick="closeLightBox()">
+    <!-- Lightbox Modal -->
+    <div id="lightbox" class="lightbox hidden" onclick="closeLightbox()">
       <span class="close-lightbox">&times;</span>
       <img id="lightboxImage" class="lightbox-image" />
       <div class="lightbox-caption" id="lightboxCaption"></div>
@@ -78,6 +82,7 @@
       </button>
     </div>
 
+    <!-- Footer -->
     <footer class="footer">
       <p>&copy; 2026 Westshore Hardcore. All rights reserved.</p>
     </footer>

@@ -27,18 +27,9 @@ import {
   serverTimestamp,
   where,
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import {
-  getStorage,
-  ref,
-  uploadBytes,
-  getDownloadURL,
-  deleteObject,
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
-
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const storage = getStorage(app);
 
 // Global state
 let currentUser = null;
@@ -109,31 +100,27 @@ window.uploadImage = async (e) => {
     return;
   }
 
-  // Validate file size (5MB)
-  if (file.size > 5 * 1024 * 1024) {
-    showMessage("Image must be less than 5MB", "error");
+  // Validate file size (1MB limit for base64 storage)
+  if (file.size > 1 * 1024 * 1024) {
+    showMessage("Image must be less than 1MB", "error");
     return;
   }
 
   btn.innerHTML = '<span class="loading"></span>';
 
   try {
-    // Create unique filename
-    const timestamp = Date.now();
-    const filename = `gallery/${timestamp}_${file.name}`;
-    const storageRef = ref(storage, filename);
+    // Convert image to base64
+    const base64Image = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target.result);
+      reader.onerror = (e) => reject(e);
+      reader.readAsDataURL(file);
+    });
 
-    // Upload file
-    await uploadBytes(storageRef, file);
-
-    // Get download URL
-    const downloadURL = await getDownloadURL(storageRef);
-
-    // Save to Firestore
+    // Save to Firestore with base64 data
     const description = document.getElementById("imageDescription").value;
     await addDoc(collection(db, "gallery"), {
-      url: downloadURL,
-      storagePath: filename,
+      imageData: base64Image,
       description: description || "",
       uploadedBy: currentUser.uid,
       uploaderName: currentUserData.name,
@@ -205,9 +192,9 @@ function createGalleryItem(image) {
 
   return `
     <div class="gallery-item" onclick="openLightbox('${image.id}', '${escapeQuotes(
-      image.url,
+      image.imageData,
     )}', '${escapeQuotes(image.description)}')">
-      <img src="${image.url}" alt="${image.description || "Gallery image"}" loading="lazy" />
+      <img src="${image.imageData}" alt="${image.description || "Gallery image"}" loading="lazy" />
       ${
         image.description || date
           ? `
@@ -222,9 +209,7 @@ function createGalleryItem(image) {
         isAdmin
           ? `
         <div class="gallery-actions">
-          <button class="btn-delete-gallery" onclick="deleteImage(event, '${image.id}', '${escapeQuotes(
-            image.storagePath,
-          )}')">
+          <button class="btn-delete-gallery" onclick="deleteImage(event, '${image.id}')">
             Delete
           </button>
         </div>
@@ -270,22 +255,12 @@ window.deleteFromLightbox = async (event) => {
 
   if (!currentLightboxImageId || !isAdmin) return;
 
-  // Get the image data to find storage path
-  const galleryRef = collection(db, "gallery");
-  const snapshot = await getDocs(galleryRef);
-  const imageDoc = snapshot.docs.find(
-    (doc) => doc.id === currentLightboxImageId,
-  );
-
-  if (imageDoc) {
-    const imageData = imageDoc.data();
-    await deleteImageById(currentLightboxImageId, imageData.storagePath);
-    closeLightbox();
-  }
+  await deleteImageById(currentLightboxImageId);
+  closeLightbox();
 };
 
 // Delete Image
-window.deleteImage = async (event, imageId, storagePath) => {
+window.deleteImage = async (event, imageId) => {
   event.stopPropagation();
 
   if (!isAdmin) {
@@ -294,18 +269,14 @@ window.deleteImage = async (event, imageId, storagePath) => {
   }
 
   if (confirm("Are you sure you want to delete this image?")) {
-    await deleteImageById(imageId, storagePath);
+    await deleteImageById(imageId);
   }
 };
 
 // Delete Image by ID
-async function deleteImageById(imageId, storagePath) {
+async function deleteImageById(imageId) {
   try {
-    // Delete from Storage
-    const storageRef = ref(storage, storagePath);
-    await deleteObject(storageRef);
-
-    // Delete from Firestore
+    // Delete from Firestore only
     await deleteDoc(doc(db, "gallery", imageId));
 
     showMessage("Image deleted successfully", "success");
